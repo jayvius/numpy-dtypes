@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Extending Existing UFunc for Custom DType &mdash; UFuncs and Custom DTypes 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="UFuncs and Custom DTypes 1.0 documentation" href="index.html" />
+    <link rel="next" title="Creating New UFunc for Custom DType" href="newufunc.html" />
+    <link rel="prev" title="Custom NumPy Data Types" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="newufunc.html" title="Creating New UFunc for Custom DType"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Custom NumPy Data Types"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">UFuncs and Custom DTypes 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="extending-existing-ufunc-for-custom-dtype">
+<h1>Extending Existing UFunc for Custom DType<a class="headerlink" href="#extending-existing-ufunc-for-custom-dtype" title="Permalink to this headline">¶</a></h1>
+<p>The first example shows how to extend the existing &#8216;add&#8217; ufunc for the Rational
+dtype. The add ufunc is extended for Rational dtypes using Rational&#8217;s
+&#8216;rational_add&#8217; function which takes two rational numbers and returns a rational
+object representing the sum of those two rational numbers:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="n">NPY_INLINE</span> <span class="n">rational</span>
+<span class="nf">rational_add</span><span class="p">(</span><span class="n">rational</span> <span class="n">x</span><span class="p">,</span> <span class="n">rational</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// d(y) retrieves denominator for y</span>
+    <span class="k">return</span> <span class="n">make_rational_fast</span><span class="p">((</span><span class="kt">int64_t</span><span class="p">)</span><span class="n">x</span><span class="p">.</span><span class="n">n</span><span class="o">*</span><span class="n">d</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="kt">int64_t</span><span class="p">)</span><span class="n">d</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="p">.</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="kt">int64_t</span><span class="p">)</span><span class="n">d</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">d</span><span class="p">(</span><span class="n">y</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="arabic">
+<li><p class="first">A 1-d loop function is created which loops over each pair of elements from two
+1-d arrays of rationals and calls rational_add for each pair:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">rational_ufunc_add</span><span class="p">(</span><span class="kt">char</span><span class="o">**</span> <span class="n">args</span><span class="p">,</span> <span class="n">npy_intp</span><span class="o">*</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">npy_intp</span><span class="o">*</span> <span class="n">steps</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">npy_intp</span> <span class="n">is0</span> <span class="o">=</span> <span class="n">steps</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">is1</span> <span class="o">=</span> <span class="n">steps</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">os</span> <span class="o">=</span> <span class="n">steps</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">n</span> <span class="o">=</span> <span class="o">*</span><span class="n">dimensions</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">i0</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">i1</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">o</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+    <span class="kt">int</span> <span class="n">k</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">k</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">rational</span> <span class="n">x</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">rational</span><span class="o">*</span><span class="p">)</span><span class="n">i0</span><span class="p">;</span>
+        <span class="n">rational</span> <span class="n">y</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">rational</span><span class="o">*</span><span class="p">)</span><span class="n">i1</span><span class="p">;</span>
+        <span class="o">*</span><span class="p">(</span><span class="n">rational</span><span class="o">*</span><span class="p">)</span><span class="n">o</span> <span class="o">=</span> <span class="n">rational_add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">);</span>
+        <span class="n">i0</span> <span class="o">+=</span> <span class="n">is0</span><span class="p">;</span> <span class="n">i1</span> <span class="o">+=</span> <span class="n">is1</span><span class="p">;</span> <span class="n">o</span> <span class="o">+=</span> <span class="n">os</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The loop function must have the exact signature as above. The function parameters are:</p>
+<ul class="simple">
+<li>char **args - array of pointers to the actual data for the input and output arrays.
+In this example there are three pointers: two pointers pointing to blocks of
+memory for the two input arrays, and one pointer pointing to the block of
+memory for the output array. The result of rational_add should be stored in
+the output array.</li>
+<li>dimensions - a pointer to the size of the dimension over which this function is looping</li>
+<li>steps - a pointer to the number of bytes to jump to get to the next element in this
+dimension for each of the input and output arguments</li>
+<li>data - arbitrary data (extra arguments, function names, etc.) that can be stored with
+the ufunc and will be passed in when it is called</li>
+</ul>
+<p>The Rational dtype has an example of a C macro which can be used to generate create the
+above function for different rational ufuncs:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#define BINARY_UFUNC(name,intype0,intype1,outtype,exp) \</span>
+<span class="cp">    void name(char** args, npy_intp* dimensions, npy_intp* steps, void* data) { \</span>
+<span class="cp">        npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions; \</span>
+<span class="cp">        char *i0 = args[0], *i1 = args[1], *o = args[2]; \</span>
+<span class="cp">        int k; \</span>
+<span class="cp">        for (k = 0; k &lt; n; k++) { \</span>
+<span class="cp">            intype0 x = *(intype0*)i0; \</span>
+<span class="cp">            intype1 y = *(intype1*)i1; \</span>
+<span class="cp">            *(outtype*)o = exp; \</span>
+<span class="cp">            i0 += is0; i1 += is1; o += os; \</span>
+<span class="cp">        } \</span>
+<span class="cp">    }</span>
+
+<span class="cp">#define RATIONAL_BINARY_UFUNC(name, type, exp) BINARY_UFUNC(rational_ufunc_##name, rational, rational, type, exp)</span>
+</pre></div>
+</div>
+<p>which can be used like so:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">RATIONAL_BINARY_UFUNC</span><span class="p">(</span><span class="n">add</span><span class="p">,</span> <span class="n">rational</span><span class="p">,</span> <span class="n">rational_add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>with the following arguments:</p>
+<ul class="simple">
+<li>name suffix of 1-d loop function (the generated loop function will have the name &#8216;rational_ufunc_&lt;name&gt;&#8217;</li>
+<li>output type</li>
+<li>expression to calculate the output value for each pair of input elements.
+In this example the expression is a call to the function rational_add.</li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</li>
+<li><p class="first">In the &#8216;initrational&#8217; function used to initialize the Rational dtype with numpy, a
+PyUFuncObject is obtained for the existing &#8216;add&#8217; ufunc in the numpy module:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">PyUFuncObject</span><span class="o">*</span> <span class="n">ufunc</span> <span class="o">=</span> <span class="p">(</span><span class="n">PyUFuncObject</span><span class="o">*</span><span class="p">)</span><span class="n">PyObject_GetAttrString</span><span class="p">(</span><span class="n">numpy</span><span class="p">,</span><span class="s">&quot;add&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</li>
+<li><p class="first">The 1-d loop function is registered using the PyUFuncObject obtained in step 2:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">types</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">npy_rational</span><span class="p">,</span><span class="n">npy_rational</span><span class="p">,</span><span class="n">npy_rational</span><span class="p">};</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">PyUFunc_RegisterLoopForType</span><span class="p">((</span><span class="n">PyUFuncObject</span><span class="o">*</span><span class="p">)</span><span class="n">ufunc</span><span class="p">,</span><span class="n">npy_rational</span><span class="p">,</span><span class="n">rational_ufunc_add</span><span class="p">,</span><span class="n">types</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The function parameters are:</p>
+<ul class="simple">
+<li>pointer to PyUFuncObject obtained in step 2</li>
+<li>custom rational dtype id (obtained when dtype is registered with call to PyArray_RegisterDataType)</li>
+<li>1-d loop function</li>
+<li>array of input and output type ids (in this case two input rational types and one
+output rational type)</li>
+<li>pointer to arbitrary data that will be passed to 1-d loop function</li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</li>
+<li><p class="first">Steps 2-3 can also be accomplished by defining a c macro similar to the one
+provided with Rational:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#define REGISTER_UFUNC(name,...) { \</span>
+<span class="cp">    PyUFuncObject* ufunc = (PyUFuncObject*)PyObject_GetAttrString(numpy,#name); \</span>
+<span class="cp">    if (!ufunc) { \</span>
+<span class="cp">        return; \</span>
+<span class="cp">    } \</span>
+<span class="cp">    int _types[] = __VA_ARGS__; \</span>
+<span class="cp">    if (sizeof(_types)/sizeof(int)!=ufunc-&gt;nargs) { \</span>
+<span class="cp">        PyErr_Format(PyExc_AssertionError,&quot;ufunc %s takes %d arguments, our loop takes %ld&quot;,#name,ufunc-&gt;nargs,sizeof(_types)/sizeof(int)); \</span>
+<span class="cp">        return; \</span>
+<span class="cp">    } \</span>
+<span class="cp">    if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc,npy_rational,rational_ufunc_##name,_types,0)&lt;0) { \</span>
+<span class="cp">        return; \</span>
+<span class="cp">    } \</span>
+<span class="cp">}</span>
+<span class="cp">#define REGISTER_UFUNC_BINARY_RATIONAL(name) REGISTER_UFUNC(name,{npy_rational,npy_rational,npy_rational})</span>
+</pre></div>
+</div>
+<p>and calling it like so:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">REGISTER_UFUNC_BINARY_RATIONAL</span><span class="p">(</span><span class="n">add</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Custom NumPy Data Types</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="newufunc.html"
+                        title="next chapter">Creating New UFunc for Custom DType</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/extendingufunc.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="newufunc.html" title="Creating New UFunc for Custom DType"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Custom NumPy Data Types"
+             >previous</a> |</li>
+        <li><a href="index.html">UFuncs and Custom DTypes 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Jay Bourque.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
