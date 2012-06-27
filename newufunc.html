@@ -154,8 +154,30 @@ provided with Rational:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="n">NEW_UNARY_UFUNC</span><span class="p">(</span><span class="n">numerator</span><span class="p">,</span><span class="n">NPY_INT64</span><span class="p">,</span><span class="s">&quot;rational number numerator&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </li>
 </ol>
+<p>An example of using the numerator ufunc with the Rational dtype:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">:</span> <span class="n">import</span> <span class="n">numpy</span> <span class="n">as</span> <span class="n">np</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">:</span> <span class="n">from</span> <span class="n">rational</span> <span class="n">import</span> <span class="n">rational</span><span class="p">,</span> <span class="n">numerator</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">:</span> <span class="n">r1</span><span class="o">=</span><span class="n">rational</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">:</span> <span class="n">r2</span><span class="o">=</span><span class="n">rational</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">:</span> <span class="n">r3</span><span class="o">=</span><span class="n">rational</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">:</span> <span class="n">r4</span><span class="o">=</span><span class="n">rational</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">:</span> <span class="n">a</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">r1</span><span class="p">,</span><span class="n">r2</span><span class="p">,</span><span class="n">r3</span><span class="p">,</span><span class="n">r4</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">rational</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">:</span> <span class="n">numerator</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">:</span> <span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+</pre></div>
+</div>
 </div>
 
 
