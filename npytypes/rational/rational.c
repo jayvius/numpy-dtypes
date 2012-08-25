@@ -1,11 +1,12 @@
 /* Fixed size rational numbers exposed to Python */
 
-#define NPY_NO_DEPRECATED_API
 
 #include <stdint.h>
 #include <math.h>
-#include <Python/Python.h>
-#include <Python/structmember.h>
+//#include <Python/Python.h>
+//#include <Python/structmember.h>
+#include <Python.h>
+#include <structmember.h>
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
 
@@ -952,6 +953,18 @@ UNARY_UFUNC(reciprocal,rational,rational_inverse(x))
 UNARY_UFUNC(numerator,int64_t,x.n)
 UNARY_UFUNC(denominator,int64_t,d(x))
 
+void rational_ufunc_inplace_multiply(char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
+    npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions;
+    char *i0 = args[0], *i1 = args[1], *o = args[2];
+    int k;
+    for (k = 0; k < n; k++) {
+        rational x = *(rational*)i0;
+        rational y = *(rational*)i1;
+        *(rational*)i0 = rational_multiply(x, y);
+        i0 += is0; i1 += is1; o += os;
+    }
+}
+
 static NPY_INLINE void
 rational_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps)
 {
@@ -1153,6 +1166,14 @@ initrational(void) {
     /* Add rational type */
     Py_INCREF(&PyRational_Type);
     PyModule_AddObject(m,"rational",(PyObject*)&PyRational_Type);
+
+    /* Create inplace multiply ufunc */
+    PyObject* ufunc2 = PyUFunc_FromFuncAndData(0,0,0,0,2,1,PyUFunc_None,(char*)"inplace_multiply",(char*)"inplace multiply for rational dtype",0);
+    ((PyUFuncObject*)ufunc2)->op_flags[0] = NPY_ITER_READWRITE;
+    ((PyUFuncObject*)ufunc2)->iter_flags = NPY_ITER_REDUCE_OK;
+    int ufunc2_types[] = {npy_rational, npy_rational, npy_rational};
+    PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc2,npy_rational,rational_ufunc_inplace_multiply,ufunc2_types,0);
+    PyModule_AddObject(m,"inplace_multiply",(PyObject*)ufunc2);
 
     /* Create matrix multiply generalized ufunc */
     PyObject* gufunc = PyUFunc_FromFuncAndDataAndSignature(0,0,0,0,2,1,PyUFunc_None,(char*)"matrix_multiply",(char*)"return result of multiplying two matrices of rationals",0,"(m,n),(n,p)->(m,p)");
