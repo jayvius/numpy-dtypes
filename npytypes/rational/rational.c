@@ -954,14 +954,15 @@ UNARY_UFUNC(numerator,int64_t,x.n)
 UNARY_UFUNC(denominator,int64_t,d(x))
 
 void rational_ufunc_inplace_multiply(char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
-    npy_intp is0 = steps[0], is1 = steps[1], os = steps[2], n = *dimensions;
-    char *i0 = args[0], *i1 = args[1], *o = args[2];
+    npy_intp is0 = steps[0], is1 = steps[1], n = *dimensions;
+    char *i0 = args[0], *i1 = args[1];
     int k;
     for (k = 0; k < n; k++) {
         rational x = *(rational*)i0;
         rational y = *(rational*)i1;
+        /* multiply two input operands and place result in first input operand */
         *(rational*)i0 = rational_multiply(x, y);
-        i0 += is0; i1 += is1; o += os;
+        i0 += is0; i1 += is1;
     }
 }
 
@@ -1168,10 +1169,10 @@ initrational(void) {
     PyModule_AddObject(m,"rational",(PyObject*)&PyRational_Type);
 
     /* Create inplace multiply ufunc */
-    PyObject* ufunc2 = PyUFunc_FromFuncAndData(0,0,0,0,2,1,PyUFunc_None,(char*)"inplace_multiply",(char*)"inplace multiply for rational dtype",0);
+    PyObject* ufunc2 = PyUFunc_FromFuncAndData(0,0,0,0,2,0,PyUFunc_None,(char*)"inplace_multiply",(char*)"inplace multiply for rational dtype",0);
     ((PyUFuncObject*)ufunc2)->op_flags[0] = NPY_ITER_READWRITE;
     ((PyUFuncObject*)ufunc2)->iter_flags = NPY_ITER_REDUCE_OK;
-    int ufunc2_types[] = {npy_rational, npy_rational, npy_rational};
+    int ufunc2_types[] = {npy_rational, npy_rational};
     PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc2,npy_rational,rational_ufunc_inplace_multiply,ufunc2_types,0);
     PyModule_AddObject(m,"inplace_multiply",(PyObject*)ufunc2);
 
